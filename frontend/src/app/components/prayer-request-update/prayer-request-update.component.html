@@ -1,0 +1,33 @@
+<div class="prayer-request-update">
+  <div class="header">
+    <h1>Add Update to Prayer Request</h1>
+    <div class="actions">
+      <button mat-button [routerLink]="['/prayer-requests', request?.id]">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button mat-raised-button color="primary" (click)="saveUpdate()" [disabled]="!updateForm.valid || saving">
+        <mat-icon>save</mat-icon>
+        {{ saving ? 'Saving...' : 'Save' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="request-info" *ngIf="request">
+    <h2>{{ request.title }}</h2>
+    <p class="description" [innerHTML]="request.description"></p>
+  </div>
+
+  <form [formGroup]="updateForm" class="update-form">
+    <div class="content-section">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Update Content</mat-label>
+        <quill-editor formControlName="content" [styles]="{ height: '400px' }"></quill-editor>
+      </mat-form-field>
+    </div>
+  </form>
+
+  <div class="loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div> 

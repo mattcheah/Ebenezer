@@ -1,0 +1,104 @@
+<div class="journal-entry">
+  <div class="header">
+    <h1>{{ entry?.id ? 'Edit Entry' : 'New Entry' }}</h1>
+    <div class="actions">
+      <button mat-button routerLink="/journal">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button mat-raised-button color="primary" (click)="saveEntry()" [disabled]="!entryForm.valid || saving">
+        <mat-icon>save</mat-icon>
+        {{ saving ? 'Saving...' : 'Save' }}
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="entryForm" class="entry-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="Enter title">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <div class="tags-section">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tags</mat-label>
+        <mat-chip-grid #chipGrid>
+          <mat-chip-row *ngFor="let tag of entryForm.get('tags')?.value" [removable]="true" (removed)="removeTag(tag)">
+            {{ tag.name }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        </mat-chip-grid>
+        <input placeholder="Add tag..."
+               [matChipInputFor]="chipGrid"
+               [matChipInputSeparatorKeyCodes]="[13, 188]"
+               (input)="filterTags($event)">
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event.option.value)">
+          <mat-option *ngFor="let tag of filteredTags" [value]="tag">
+            {{ tag.name }}
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </div>
+
+    <div class="bible-verses-section">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Bible Verses</mat-label>
+        <mat-chip-grid #verseGrid>
+          <mat-chip-row *ngFor="let verse of entryForm.get('bibleVerses')?.value" [removable]="true" (removed)="removeBibleVerse(verse)">
+            {{ verse }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        </mat-chip-grid>
+        <input placeholder="Add Bible verse..."
+               [matChipInputFor]="verseGrid"
+               [matChipInputSeparatorKeyCodes]="[13, 188]"
+               (matChipInputTokenEnd)="addBibleVerse($event.value)">
+      </mat-form-field>
+    </div>
+
+    <div class="prayer-requests-section">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Prayer Requests</mat-label>
+        <mat-chip-grid #requestGrid>
+          <mat-chip-row *ngFor="let requestId of entryForm.get('prayerRequests')?.value" [removable]="true" (removed)="removePrayerRequest(requestId)">
+            {{ getPrayerRequestById(requestId)?.title }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        </mat-chip-grid>
+        <input placeholder="Add prayer request..."
+               [matChipInputFor]="requestGrid"
+               [matChipInputSeparatorKeyCodes]="[13, 188]"
+               (input)="filterPrayerRequests($event)">
+        <mat-autocomplete #requestAuto="matAutocomplete" (optionSelected)="addPrayerRequest($event.option.value)">
+          <mat-option *ngFor="let request of filteredPrayerRequests" [value]="request">
+            {{ request.title }}
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </div>
+
+    <div class="content-section">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Content</mat-label>
+        <quill-editor formControlName="content" [styles]="{ height: '400px' }"></quill-editor>
+      </mat-form-field>
+    </div>
+  </form>
+
+  <div class="loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

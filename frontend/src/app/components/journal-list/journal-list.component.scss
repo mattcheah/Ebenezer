@@ -1,0 +1,101 @@
+.journal-list {
+  padding: 20px;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 500;
+    }
+  }
+
+  .entries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .entry-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    mat-card-header {
+      margin-bottom: 16px;
+    }
+
+    mat-card-content {
+      flex-grow: 1;
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+
+        mat-chip {
+          color: white;
+        }
+      }
+
+      .content-preview {
+        margin: 0 0 16px;
+        color: rgba(0, 0, 0, 0.7);
+        line-height: 1.5;
+      }
+
+      .bible-verses,
+      .prayer-requests {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 8px;
+
+        mat-icon {
+          font-size: 20px;
+        }
+      }
+    }
+
+    mat-card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px;
+    }
+  }
+
+  .no-entries {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.6);
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+  }
+
+  .loading {
+    display: flex;
+    justify-content: center;
+    padding: 48px;
+  }
+}

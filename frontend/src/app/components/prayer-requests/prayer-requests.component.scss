@@ -1,0 +1,102 @@
+.prayer-requests {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 500;
+    }
+  }
+
+  .requests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+
+    .request-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+
+      mat-card-header {
+        margin-bottom: 16px;
+      }
+
+      mat-card-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .description {
+          flex-grow: 1;
+        }
+
+        .updates-list {
+          .update-item {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .update-date {
+              font-size: 0.875rem;
+              color: rgba(0, 0, 0, 0.6);
+              margin-bottom: 8px;
+            }
+
+            .update-content {
+              white-space: pre-wrap;
+            }
+          }
+        }
+      }
+
+      mat-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 16px;
+      }
+    }
+  }
+
+  .loading {
+    display: flex;
+    justify-content: center;
+    padding: 48px;
+  }
+
+  .no-requests {
+    text-align: center;
+    padding: 48px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+::ng-deep {
+  .mat-mdc-card-content {
+    padding: 16px;
+  }
+
+  .mat-mdc-expansion-panel-body {
+    padding: 0;
+  }
+}
