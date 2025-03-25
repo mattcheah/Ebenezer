@@ -93,8 +93,47 @@
     <div class="content-section">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Content</mat-label>
-        <div class="quill-wrapper">
-          <quill-editor formControlName="content"></quill-editor>
+        <div class="editor-container">
+          <div class="toolbar">
+            <button mat-icon-button type="button" (click)="insertMarkdown('**', '**')" matTooltip="Bold">
+              <mat-icon>format_bold</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('*', '*')" matTooltip="Italic">
+              <mat-icon>format_italic</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('# ')" matTooltip="Heading">
+              <mat-icon>title</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('> ')" matTooltip="Quote">
+              <mat-icon>format_quote</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('- ')" matTooltip="Bullet List">
+              <mat-icon>format_list_bulleted</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('1. ')" matTooltip="Numbered List">
+              <mat-icon>format_list_numbered</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('[', '](url)')" matTooltip="Link">
+              <mat-icon>link</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('![', '](image-url)')" matTooltip="Image">
+              <mat-icon>image</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="insertMarkdown('`', '`')" matTooltip="Code">
+              <mat-icon>code</mat-icon>
+            </button>
+          </div>
+          <textarea
+            #contentTextarea
+            matInput
+            formControlName="content"
+            class="editor-textarea"
+            placeholder="Write your content here (Markdown supported)">
+          </textarea>
+          <div class="preview-panel" *ngIf="entryForm.get('content')?.value">
+            <h3>Preview</h3>
+            <div class="markdown-content" [innerHTML]="entryForm.get('content')?.value | safeHtml"></div>
+          </div>
         </div>
       </mat-form-field>
     </div>
@@ -104,3 +143,5 @@
     <mat-spinner diameter="40"></mat-spinner>
   </div>
 </div>
+
+

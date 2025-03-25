@@ -19,8 +19,13 @@
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
+    "@tinymce/tinymce-angular": "^8.0.1",
     "date-fns": "^4.1.0",
+    "marked": "^15.0.7",
+    "ngx-markdown": "^19.1.1",
+    "ngx-markdown-editor": "^5.3.4",
     "ngx-quill": "^27.0.1",
+    "ngx-simplemde": "^12.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

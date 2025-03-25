@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -11,7 +11,6 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { QuillModule } from 'ngx-quill';
 import { JournalService } from '../../services/journal.service';
 import { TagService } from '../../services/tag.service';
 import { PrayerService } from '../../services/prayer.service';
@@ -20,6 +19,8 @@ import { Tag } from '../../models/tag';
 import { PrayerRequest } from '../../models/prayer-request';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MarkdownModule, MarkdownService } from 'ngx-markdown';
 
 @Component({
   selector: 'app-journal-entry',
@@ -37,12 +38,16 @@ import { Subject } from 'rxjs';
     MatChipsModule,
     MatAutocompleteModule,
     MatProgressSpinnerModule,
-    QuillModule
+    MatTooltipModule,
+    MarkdownModule
   ],
+  providers: [MarkdownService],
   templateUrl: './journal-entry.component.html',
   styleUrls: ['./journal-entry.component.scss']
 })
 export class JournalEntryComponent implements OnInit, OnDestroy {
+  @ViewChild('contentTextarea') contentTextarea!: ElementRef;
+  
   entryForm: FormGroup;
   entry: JournalEntry | null = null;
   tags: Tag[] = [];
@@ -142,6 +147,26 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
           this.saveEntry();
         }
       });
+  }
+
+  
+
+  insertMarkdown(prefix: string, suffix: string = ''): void {
+    const textarea = this.contentTextarea.nativeElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = this.entryForm.get('content')?.value || '';
+    const selectedText = text.substring(start, end);
+
+    const newText = text.substring(0, start) + prefix + selectedText + suffix + text.substring(end);
+    this.entryForm.patchValue({ content: newText });
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    });
   }
 
   filterTags(event: Event): void {
