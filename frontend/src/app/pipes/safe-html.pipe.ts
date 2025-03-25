@@ -11,7 +11,7 @@ export class SafeHtmlPipe implements PipeTransform {
 
   transform(value: string): SafeHtml {
     if (!value) return '';
-    const html = marked(value);
+    const html = marked(value, {async: false});
     return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 } 

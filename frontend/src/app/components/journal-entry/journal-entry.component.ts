@@ -21,6 +21,7 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MarkdownModule, MarkdownService } from 'ngx-markdown';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-journal-entry',
@@ -39,7 +40,8 @@ import { MarkdownModule, MarkdownService } from 'ngx-markdown';
     MatAutocompleteModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    MarkdownModule
+    MarkdownModule,
+    SafeHtmlPipe
   ],
   providers: [MarkdownService],
   templateUrl: './journal-entry.component.html',
