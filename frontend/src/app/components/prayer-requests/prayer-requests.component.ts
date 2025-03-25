@@ -11,9 +11,8 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { PrayerService } from '../../services/prayer.service';
 import { TagService } from '../../services/tag.service';
-import { PrayerRequest } from '../../models/prayer-request';
-import { Tag } from '../../models/tag';
-import { PrayerRequestUpdate } from '../../models/prayer-request-update';
+import { PrayerRequest, PrayerRequestUpdate } from '../../models/prayer-request';
+// import { Tag } from '../../models/tag';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { format } from 'date-fns';
@@ -37,7 +36,7 @@ import { format } from 'date-fns';
 })
 export class PrayerRequestsComponent implements OnInit, OnDestroy {
   prayerRequests: PrayerRequest[] = [];
-  tags: Tag[] = [];
+  // tags: Tag[] = [];
   loading = true;
   private destroy$ = new Subject<void>();
 
@@ -49,7 +48,7 @@ export class PrayerRequestsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPrayerRequests();
-    this.loadTags();
+    // this.loadTags();
   }
 
   ngOnDestroy(): void {
@@ -72,27 +71,27 @@ export class PrayerRequestsComponent implements OnInit, OnDestroy {
       });
   }
 
-  private loadTags(): void {
-    this.tagService.getTags()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (tags) => {
-          this.tags = tags;
-        },
-        error: (error) => {
-          console.error('Error loading tags:', error);
-        }
-      });
-  }
+  // private loadTags(): void {
+  //   this.tagService.getTags()
+  //     .pipe(takeUntil(this.destroy$))
+  //     .subscribe({
+  //       next: (tags) => {
+  //         this.tags = tags;
+  //       },
+  //       error: (error) => {
+  //         console.error('Error loading tags:', error);
+  //       }
+  //     });
+  // }
 
   formatDate(date: string | undefined): string {
     if (!date) return '';
     return format(new Date(date), 'MMM d, yyyy');
   }
 
-  getTagById(id: number): Tag | undefined {
-    return this.tags.find(tag => tag.id === id);
-  }
+  // getTagById(id: number): Tag | undefined {
+  //   return this.tags.find(tag => tag.id === id);
+  // }
 
   getLatestUpdate(updates: PrayerRequestUpdate[]): PrayerRequestUpdate | undefined {
     return updates.length > 0 ? updates[updates.length - 1] : undefined;
