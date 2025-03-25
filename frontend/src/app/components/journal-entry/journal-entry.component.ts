@@ -76,7 +76,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     if (id) {
       this.loadEntry(parseInt(id, 10));
     }
-    this.loadTags();
+    // this.loadTags();
     this.loadPrayerRequests();
     this.setupAutoSave();
   }
@@ -108,16 +108,16 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadTags(): void {
-    this.tagService.getTags().subscribe({
-      next: (tags: Tag[]) => {
-        this.tags = tags;
-      },
-      error: (error: Error) => {
-        console.error('Error loading tags:', error);
-      }
-    });
-  }
+  // private loadTags(): void {
+  //   this.tagService.getTags().subscribe({
+  //     next: (tags: Tag[]) => {
+  //       this.tags = tags;
+  //     },
+  //     error: (error: Error) => {
+  //       console.error('Error loading tags:', error);
+  //     }
+  //   });
+  // }
 
   private loadPrayerRequests(): void {
     this.prayerService.getRequests().subscribe({

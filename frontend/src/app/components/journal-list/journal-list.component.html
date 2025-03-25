@@ -11,7 +11,7 @@
     <mat-card *ngFor="let entry of entries" class="entry-card">
       <mat-card-header>
         <mat-card-title>{{ entry.title }}</mat-card-title>
-        <mat-card-subtitle>{{ formatDate(entry.date) }}</mat-card-subtitle>
+        <mat-card-subtitle>{{ entry.date | date:'MMM d, yyyy' }}</mat-card-subtitle>
       </mat-card-header>
       
       <mat-card-content>

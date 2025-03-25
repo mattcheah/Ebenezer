@@ -50,10 +50,6 @@ export class JournalListComponent implements OnInit {
     });
   }
 
-  formatDate(date: string): string {
-    return format(new Date(date), 'MMM d, yyyy');
-  }
-
   getContentPreview(content: string): string {
     return content.length > 150 ? content.substring(0, 150) + '...' : content;
   }

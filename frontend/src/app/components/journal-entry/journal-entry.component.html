@@ -26,7 +26,7 @@
       <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
 
-    <div class="tags-section">
+    <!-- <div class="tags-section">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Tags</mat-label>
         <mat-chip-grid #chipGrid>
@@ -47,7 +47,7 @@
           </mat-option>
         </mat-autocomplete>
       </mat-form-field>
-    </div>
+    </div> -->
 
     <div class="bible-verses-section">
       <mat-form-field appearance="outline" class="full-width">
@@ -93,7 +93,9 @@
     <div class="content-section">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Content</mat-label>
-        <quill-editor formControlName="content" [styles]="{ height: '400px' }"></quill-editor>
+        <div class="quill-wrapper">
+          <quill-editor formControlName="content"></quill-editor>
+        </div>
       </mat-form-field>
     </div>
   </form>
