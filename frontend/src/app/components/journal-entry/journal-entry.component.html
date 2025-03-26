@@ -1,25 +1,25 @@
 <div class="journal-entry">
-  <form [formGroup]="entryForm" class="entry-form">
-  <div class="header">
-    <div class="title-section">
-      <input
-        matInput
-        formControlName="title"
-        class="title-input"
-        placeholder="Enter title"
-        (blur)="onTitleBlur()">
+  <form *ngIf="!loading" [formGroup]="entryForm" class="entry-form">
+    <div class="header">
+      <div class="title-section">
+        <input
+          matInput
+          formControlName="title"
+          class="title-input"
+          placeholder="Enter title"
+          (blur)="onTitleBlur()">
+      </div>
+      <div class="actions">
+        <button mat-button routerLink="/journal">
+          <mat-icon>arrow_back</mat-icon>
+          Back
+        </button>
+        <button mat-raised-button color="primary" (click)="saveEntry()" [disabled]="!entryForm.valid || saving">
+          <mat-icon>save</mat-icon>
+          {{ saving ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
     </div>
-    <div class="actions">
-      <button mat-button routerLink="/journal">
-        <mat-icon>arrow_back</mat-icon>
-        Back
-      </button>
-      <button mat-raised-button color="primary" (click)="saveEntry()" [disabled]="!entryForm.valid || saving">
-        <mat-icon>save</mat-icon>
-        {{ saving ? 'Saving...' : 'Save' }}
-      </button>
-    </div>
-  </div>
 
   
   

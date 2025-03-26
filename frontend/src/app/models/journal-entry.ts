@@ -4,10 +4,10 @@ export interface JournalEntry {
   id?: number;
   title: string;
   content: string;
-  date: string;
+  // date: string;
   tags: Tag[];
   bibleVerses: string[];
   prayerRequests: number[];
-  createdAt?: string;
-  updatedAt?: string;
+  created_at?: string;
+  updated_at?: string;
 }

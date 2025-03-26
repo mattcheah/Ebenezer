@@ -50,7 +50,7 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 export class JournalEntryComponent implements OnInit, OnDestroy {
   @ViewChild('contentTextarea') contentTextarea!: ElementRef;
   
-  entryForm: FormGroup;
+  entryForm: FormGroup = new FormGroup({});
   entry: JournalEntry | null = null;
   tags: Tag[] = [];
   prayerRequests: PrayerRequest[] = [];
@@ -71,30 +71,32 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute
   ) {
 
-
-    this.entryForm = this.fb.group({
-      title: [
-        this.initDate.toLocaleString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }).replace('at', '-').replace(' PM', 'pm').replace(' AM', 'am'),
-        Validators.required],
-      date: [this.initDate, Validators.required],
-      tags: [[]],
-      bibleVerses: [[]],
-      prayerRequests: [[]],
-      content: ['', Validators.required]
-    });
   }
 
   ngOnInit(): void {
+    this.loading = true;
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadEntry(parseInt(id, 10));
+    } else {
+      this.entryForm = this.fb.group({
+        title: [
+          this.initDate.toLocaleString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          }).replace('at', '-').replace(' PM', 'pm').replace(' AM', 'am'),
+          Validators.required],
+        date: [this.initDate, Validators.required],
+        tags: [[]],
+        bibleVerses: [[]],
+        prayerRequests: [[]],
+        content: ['', Validators.required]
+      });
+      this.loading = false;
     }
 
     
@@ -132,9 +134,9 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     this.journalService.getEntry(id).subscribe({
       next: (entry) => {
         this.entry = entry;
-        this.entryForm.patchValue({
+        this.entryForm = this.fb.group({
           title: entry.title,
-          date: new Date(entry.date),
+          date: new Date(entry.created_at ?? this.initDate),
           tags: entry.tags,
           bibleVerses: entry.bibleVerses,
           prayerRequests: entry.prayerRequests,
@@ -174,7 +176,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   private setupAutoSave(): void {
     this.entryForm.valueChanges
       .pipe(
-        debounceTime(2000),
+        debounceTime(10000),
         distinctUntilChanged(),
         map(() => this.entryForm.valid)
       )
@@ -283,7 +285,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     const entryData: JournalEntry = {
       id: this.entry?.id || 0,
       title: formValue.title,
-      date: formValue.date.toISOString(),
+      updated_at: formValue.date.toISOString(),
       content: formValue.content,
       tags: formValue.tags,
       bibleVerses: formValue.bibleVerses,
