@@ -136,7 +136,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
         this.entry = entry;
         this.entryForm = this.fb.group({
           title: entry.title,
-          date: new Date(entry.created_at ?? this.initDate),
+          date: new Date(entry.createdAt ?? this.initDate),
           tags: entry.tags,
           bibleVerses: entry.bibleVerses,
           prayerRequests: entry.prayerRequests,
@@ -285,11 +285,11 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     const entryData: JournalEntry = {
       id: this.entry?.id || 0,
       title: formValue.title,
-      updated_at: formValue.date.toISOString(),
+      updatedAt: formValue.date.toISOString(),
       content: formValue.content,
-      tags: formValue.tags,
-      bibleVerses: formValue.bibleVerses,
-      prayerRequests: formValue.prayerRequests
+      tags: formValue.tags ?? [],
+      bibleVerses: formValue.bibleVerses ?? [],
+      prayerRequests: formValue.prayerRequests ?? []
     };
 
     const operation = this.entry && typeof this.entry.id === 'number'

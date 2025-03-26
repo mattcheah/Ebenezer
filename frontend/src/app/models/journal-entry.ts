@@ -8,6 +8,6 @@ export interface JournalEntry {
   tags: Tag[];
   bibleVerses: string[];
   prayerRequests: number[];
-  created_at?: string;
-  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

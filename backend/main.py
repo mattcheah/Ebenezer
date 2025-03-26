@@ -69,18 +69,20 @@ class PrayerRequestCreate(PrayerRequestBase):
 
 class PrayerRequest(PrayerRequestBase):
     id: int
-    createdAt: datetime = Field(alias="created_at")
-    updatedAt: Optional[datetime] = Field(alias="updated_at")
+    created_at: datetime
+    updated_at: Optional[datetime]
     updates: List[PrayerRequestUpdate] = []
     tags: List[Tag] = []
-    journalEntryId: Optional[int] = Field(alias="journal_entry_id", default=None)
-    journalEntry: Optional["JournalEntry"] = Field(alias="journal_entry", default=None)
-    class Config:
-        from_attributes = True
-        populate_by_name = True
-        json_encoders = {
+    journal_entry_id: Optional[int] = None
+    journal_entry: Optional["JournalEntry"] = None
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+        "alias_generator": lambda x: x.split('_')[0] + ''.join(word.capitalize() for word in x.split('_')[1:]),
+        "json_encoders": {
             datetime: lambda v: v.isoformat()
         }
+    }
 
 class JournalEntryBase(BaseModel):
     title: Optional[str] = None
@@ -96,15 +98,15 @@ class JournalEntry(JournalEntryBase):
     createdAt: datetime = Field(alias="created_at")
     updatedAt: Optional[datetime] = Field(alias="updated_at")
     tags: List[Tag] = []
-    prayerRequests: List["PrayerRequest"] = Field(alias="prayer_requests", default_factory=list)
-    class Config:
-        from_attributes = True
-        populate_by_name = True
-        allow_population_by_field_name = True
-        json_encoders = {
+    prayer_requests: List["PrayerRequest"] = []
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+        "alias_generator": lambda x: x.split('_')[0] + ''.join(word.capitalize() for word in x.split('_')[1:]),
+        "json_encoders": {
             datetime: lambda v: v.isoformat()
-        }
-        json_schema_extra = {
+        },
+        "json_schema_extra": {
             "example": {
                 "id": 1,
                 "title": "My Journal Entry",
@@ -116,6 +118,7 @@ class JournalEntry(JournalEntryBase):
                 "prayerRequests": []
             }
         }
+    }
 
 # CRUD operations for Tags
 @app.post("/tags/", response_model=Tag)
