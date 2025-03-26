@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import models
 from database import engine, get_db
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
+import json
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -15,11 +16,17 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://localhost:3000"],  # Allow both Angular and React ports
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Specify the exact origin
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+    expose_headers=["*"],  # Exposes all headers
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+# Add a test endpoint to verify CORS
+@app.get("/test-cors")
+def test_cors():
+    return {"message": "CORS is working"}
 
 # Pydantic models for request/response
 class TagBase(BaseModel):
@@ -50,7 +57,7 @@ class PrayerRequestUpdate(PrayerRequestUpdateBase):
 class PrayerRequestBase(BaseModel):
     title: str
     description: str
-    is_for_me: bool = False
+    isForMe: bool = False
     tags: List[int] = []
 
 class PrayerRequestCreate(PrayerRequestBase):
@@ -58,17 +65,21 @@ class PrayerRequestCreate(PrayerRequestBase):
 
 class PrayerRequest(PrayerRequestBase):
     id: int
-    created_at: datetime
-    updated_at: Optional[datetime]
+    createdAt: datetime = Field(alias="created_at")
+    updatedAt: Optional[datetime] = Field(alias="updated_at")
     updates: List[PrayerRequestUpdate] = []
     tags: List[Tag] = []
     class Config:
         from_attributes = True
+        populate_by_name = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 class JournalEntryBase(BaseModel):
     title: Optional[str] = None
     content: str
-    bible_verses: Optional[str] = None
+    bibleVerses: List[str] = []
     tags: List[int] = []
 
 class JournalEntryCreate(JournalEntryBase):
@@ -76,11 +87,15 @@ class JournalEntryCreate(JournalEntryBase):
 
 class JournalEntry(JournalEntryBase):
     id: int
-    created_at: datetime
-    updated_at: Optional[datetime]
+    createdAt: datetime = Field(alias="created_at")
+    updatedAt: Optional[datetime] = Field(alias="updated_at")
     tags: List[Tag] = []
     class Config:
         from_attributes = True
+        populate_by_name = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 # CRUD operations for Tags
 @app.post("/tags/", response_model=Tag)
@@ -102,7 +117,7 @@ def create_journal_entry(entry: JournalEntryCreate, db: Session = Depends(get_db
     db_entry = models.JournalEntry(
         title=entry.title,
         content=entry.content,
-        bible_verses=entry.bible_verses
+        bible_verses=json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
     )
     if entry.tags:
         db_entry.tags = db.query(models.Tag).filter(models.Tag.id.in_(entry.tags)).all()
@@ -132,6 +147,8 @@ def update_journal_entry(entry_id: int, entry: JournalEntryCreate, db: Session =
     for key, value in entry.dict(exclude_unset=True).items():
         if key == 'tags':
             db_entry.tags = db.query(models.Tag).filter(models.Tag.id.in_(value)).all()
+        elif key == 'bibleVerses':
+            db_entry.bible_verses = json.dumps(value) if value else "[]"
         else:
             setattr(db_entry, key, value)
     
@@ -155,7 +172,7 @@ def create_prayer_request(request: PrayerRequestCreate, db: Session = Depends(ge
     db_request = models.PrayerRequest(
         title=request.title,
         description=request.description,
-        is_for_me=request.is_for_me
+        is_for_me=request.isForMe
     )
     if request.tags:
         db_request.tags = db.query(models.Tag).filter(models.Tag.id.in_(request.tags)).all()

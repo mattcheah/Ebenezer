@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateT
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
+import json
 
 # Association table for many-to-many relationship between JournalEntry and Tag
 journal_tag = Table(
@@ -25,13 +26,24 @@ class JournalEntry(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(Text)
-    bible_verses = Column(Text)
+    bible_verses = Column(Text, default="[]")  # Store as JSON string, default to empty array
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     tags = relationship("Tag", secondary=journal_tag, back_populates="journal_entries")
     prayer_requests = relationship("PrayerRequest", back_populates="journal_entry")
+
+    @property
+    def bible_verses_list(self):
+        try:
+            return json.loads(self.bible_verses)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    @bible_verses_list.setter
+    def bible_verses_list(self, value):
+        self.bible_verses = json.dumps(value) if value else "[]"
 
 class PrayerRequest(Base):
     __tablename__ = "prayer_requests"
