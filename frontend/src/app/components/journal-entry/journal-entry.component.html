@@ -1,6 +1,14 @@
 <div class="journal-entry">
+  <form [formGroup]="entryForm" class="entry-form">
   <div class="header">
-    <h1>{{ entry?.id ? 'Edit Entry' : 'New Entry' }}</h1>
+    <div class="title-section">
+      <input
+        matInput
+        formControlName="title"
+        class="title-input"
+        placeholder="Enter title"
+        (blur)="onTitleBlur()">
+    </div>
     <div class="actions">
       <button mat-button routerLink="/journal">
         <mat-icon>arrow_back</mat-icon>
@@ -13,18 +21,15 @@
     </div>
   </div>
 
-  <form [formGroup]="entryForm" class="entry-form">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Title</mat-label>
-      <input matInput formControlName="title" placeholder="Enter title">
-    </mat-form-field>
+  
+  
 
-    <mat-form-field appearance="outline" class="full-width">
+    <!-- <mat-form-field appearance="outline" class="full-width">
       <mat-label>Date</mat-label>
       <input matInput [matDatepicker]="picker" formControlName="date">
       <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
-    </mat-form-field>
+    </mat-form-field> -->
 
     <!-- <div class="tags-section">
       <mat-form-field appearance="outline" class="full-width">

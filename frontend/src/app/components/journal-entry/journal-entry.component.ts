@@ -17,7 +17,7 @@ import { PrayerService } from '../../services/prayer.service';
 import { JournalEntry } from '../../models/journal-entry';
 import { Tag } from '../../models/tag';
 import { PrayerRequest } from '../../models/prayer-request';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, takeUntil, takeWhile } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MarkdownModule, MarkdownService } from 'ngx-markdown';
@@ -60,6 +60,8 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   saving = false;
   private destroy$ = new Subject<void>();
 
+  initDate = new Date();
+
   constructor(
     private fb: FormBuilder,
     private journalService: JournalService,
@@ -68,9 +70,20 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute
   ) {
+
+
     this.entryForm = this.fb.group({
-      title: ['', Validators.required],
-      date: [new Date(), Validators.required],
+      title: [
+        this.initDate.toLocaleString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace('at', '-').replace(' PM', 'pm').replace(' AM', 'am'),
+        Validators.required],
+      date: [this.initDate, Validators.required],
       tags: [[]],
       bibleVerses: [[]],
       prayerRequests: [[]],
@@ -83,6 +96,8 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     if (id) {
       this.loadEntry(parseInt(id, 10));
     }
+
+    
     // this.loadTags();
     this.loadPrayerRequests();
     this.setupAutoSave();
@@ -91,6 +106,25 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+
+  onTitleBlur(): void {
+    let title = this.entryForm.get('title');
+    if (title?.value == "") {
+      this.entryForm.patchValue({
+        title: this.initDate.toLocaleString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).replace('at', '-').replace(' PM', 'pm').replace(' AM', 'am')
+      });
+      title.markAsPristine();
+    }
+    
   }
 
   private loadEntry(id: number): void {

@@ -12,7 +12,7 @@ export class JournalService {
   constructor(private http: HttpClient) { }
 
   getEntries(): Observable<JournalEntry[]> {
-    return this.http.get<JournalEntry[]>(this.apiUrl);
+    return this.http.get<JournalEntry[]>(this.apiUrl+"/");
   }
 
   getEntry(id: number): Observable<JournalEntry> {
@@ -20,7 +20,7 @@ export class JournalService {
   }
 
   createEntry(entry: JournalEntry): Observable<JournalEntry> {
-    return this.http.post<JournalEntry>(this.apiUrl, entry);
+    return this.http.post<JournalEntry>(this.apiUrl+"/", entry);
   }
 
   updateEntry(id: number, entry: JournalEntry): Observable<JournalEntry> {
