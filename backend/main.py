@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import models
 from database import engine, get_db
@@ -50,9 +50,13 @@ class PrayerRequestUpdateCreate(PrayerRequestUpdateBase):
 class PrayerRequestUpdate(PrayerRequestUpdateBase):
     id: int
     date: datetime
-    prayer_request_id: int
+    prayerRequestId: int = Field(alias="prayer_request_id")
     class Config:
         from_attributes = True
+        populate_by_name = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 class PrayerRequestBase(BaseModel):
     title: str
@@ -69,6 +73,8 @@ class PrayerRequest(PrayerRequestBase):
     updatedAt: Optional[datetime] = Field(alias="updated_at")
     updates: List[PrayerRequestUpdate] = []
     tags: List[Tag] = []
+    journalEntryId: Optional[int] = Field(alias="journal_entry_id", default=None)
+    journalEntry: Optional["JournalEntry"] = Field(alias="journal_entry", default=None)
     class Config:
         from_attributes = True
         populate_by_name = True
@@ -90,11 +96,25 @@ class JournalEntry(JournalEntryBase):
     createdAt: datetime = Field(alias="created_at")
     updatedAt: Optional[datetime] = Field(alias="updated_at")
     tags: List[Tag] = []
+    prayerRequests: List["PrayerRequest"] = Field(alias="prayer_requests", default_factory=list)
     class Config:
         from_attributes = True
         populate_by_name = True
+        allow_population_by_field_name = True
         json_encoders = {
             datetime: lambda v: v.isoformat()
+        }
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "title": "My Journal Entry",
+                "content": "Content here",
+                "bibleVerses": ["John 3:16"],
+                "tags": [],
+                "createdAt": "2024-02-20T12:00:00",
+                "updatedAt": None,
+                "prayerRequests": []
+            }
         }
 
 # CRUD operations for Tags
@@ -128,12 +148,16 @@ def create_journal_entry(entry: JournalEntryCreate, db: Session = Depends(get_db
 
 @app.get("/journal-entries/", response_model=List[JournalEntry])
 def read_journal_entries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    entries = db.query(models.JournalEntry).offset(skip).limit(limit).all()
+    entries = db.query(models.JournalEntry).options(
+        joinedload(models.JournalEntry.prayer_requests)
+    ).offset(skip).limit(limit).all()
     return entries
 
 @app.get("/journal-entries/{entry_id}", response_model=JournalEntry)
 def read_journal_entry(entry_id: int, db: Session = Depends(get_db)):
-    entry = db.query(models.JournalEntry).filter(models.JournalEntry.id == entry_id).first()
+    entry = db.query(models.JournalEntry).options(
+        joinedload(models.JournalEntry.prayer_requests)
+    ).filter(models.JournalEntry.id == entry_id).first()
     if entry is None:
         raise HTTPException(status_code=404, detail="Journal entry not found")
     return entry

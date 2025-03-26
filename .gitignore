@@ -154,3 +154,4 @@ MANIFEST
 venv/
 venv_new/
 ENV/ 
+backend/__pycache__/*
