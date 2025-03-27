@@ -79,25 +79,30 @@
           <mat-icon>add</mat-icon>
         </button>
       </div>
-      <div formArrayName="prayerRequests" class="prayer-requests-list">
-        <div *ngFor="let request of prayerRequestsFormArray.controls; let i=index" [formGroupName]="i" class="prayer-request-item">
-          <div class="prayer-request-content">
-            <div class="checkbox-line">
-              <mat-icon class="checkbox-icon" (click)="togglePrayerRequestCheck(i)" [class.checked]="request.get('checked')?.value">
-                {{ request.get('checked')?.value ? 'check_box' : 'check_box_outline_blank' }}
-              </mat-icon>
-              <mat-form-field appearance="outline" class="title-field">
-                <mat-label>Title</mat-label>
-                <input matInput formControlName="title" placeholder="Enter prayer request title">
-              </mat-form-field>
-              <button mat-icon-button color="warn" (click)="removePrayerRequestForm(i)">
-                <mat-icon>delete</mat-icon>
-              </button>
+      <div class="notepad-container">
+        <div class="notepad-lines">
+          <div formArrayName="prayerRequests" class="prayer-requests-list">
+            <div *ngFor="let request of prayerRequestsFormArray.controls; let i=index" [formGroupName]="i" class="prayer-request-item">
+              <div class="prayer-request-content">
+                <div class="checkbox-line">
+                  <mat-icon class="checkbox-icon" (click)="togglePrayerRequestCheck(i)" [class.checked]="request.get('checked')?.value">
+                    {{ request.get('checked')?.value ? 'check_box' : 'check_box_outline_blank' }}
+                  </mat-icon>
+                  <input matInput formControlName="title" class="title-input" placeholder="Enter prayer request title">
+                  <button mat-icon-button color="warn" (click)="removePrayerRequestForm(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                <div class="auto-expand-wrapper">
+                  <div class="hidden-div" [innerHTML]="request.get('description')?.value + '\n'"></div>
+                  <textarea matInput 
+                          formControlName="description" 
+                          class="description-input"
+                          placeholder="Enter prayer request description" 
+                          (input)="adjustTextareaHeight($event)"></textarea>
+                </div>
+              </div>
             </div>
-            <mat-form-field appearance="outline" class="description-field">
-              <mat-label>Description</mat-label>
-              <textarea matInput formControlName="description" placeholder="Enter prayer request description" rows="2"></textarea>
-            </mat-form-field>
           </div>
         </div>
       </div>

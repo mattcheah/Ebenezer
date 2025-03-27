@@ -280,6 +280,12 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     this.prayerRequestsFormArray.push(prayerRequestForm);
   }
 
+  adjustTextareaHeight(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+
   togglePrayerRequestCheck(index: number): void {
     const formGroup = this.prayerRequestsFormArray.at(index);
     const currentValue = formGroup.get('checked')?.value;

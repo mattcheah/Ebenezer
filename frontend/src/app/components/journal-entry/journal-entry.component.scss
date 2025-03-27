@@ -56,7 +56,7 @@
 
       .notepad-container {
         background: #fff;
-        padding: 40px;
+        padding: 20px 40px 40px 40px;
         border-radius: 4px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         position: relative;
@@ -178,10 +178,6 @@
 
 .prayer-requests-section {
   margin: 20px 0;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   .section-header {
     display: flex;
@@ -195,49 +191,141 @@
     }
   }
 
-  .prayer-requests-list {
-    .prayer-request-item {
-      margin-bottom: 16px;
-      padding: 12px;
-      background-color: #f9f9f9;
-      border-radius: 4px;
-      border-left: 4px solid #e0e0e0;
+  .notepad-container {
+    background: #fff;
+    padding: 0px 40px 40px 40px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
 
-      &:last-child {
-        margin-bottom: 0;
+    .notepad-lines {
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent,
+          transparent 31px,
+          #e0e0e0 31px,
+          #e0e0e0 32px
+        );
+        pointer-events: none;
+        z-index: 1;
       }
 
-      .prayer-request-content {
-        .checkbox-line {
-          display: flex;
-          align-items: center;
-          margin-bottom: 8px;
+      .prayer-requests-list {
+        position: relative;
 
-          .checkbox-icon {
-            margin-right: 8px;
-            color: #666;
-            cursor: pointer;
-            transition: color 0.2s ease;
-            user-select: none;
+        .prayer-request-item {
+          margin-bottom: 0;
+          position: relative;
 
-            &:hover {
-              color: #1976d2;
+          .prayer-request-content {
+            .checkbox-line {
+              display: flex;
+              align-items: center;
+              height: 32px;
+              padding: 0 20px;
+              position: relative;
+              z-index: 2;
+
+              .checkbox-icon {
+                margin-right: 8px;
+                color: #666;
+                cursor: pointer;
+                transition: color 0.2s ease;
+                user-select: none;
+                font-size: 20px;
+
+                &:hover {
+                  color: #1976d2;
+                }
+
+                &.checked {
+                  color: #1976d2;
+                }
+              }
+
+              .title-input {
+                flex: 1;
+                margin-right: 8px;
+                border: none;
+                background: transparent;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                height: 32px;
+                line-height: 32px;
+                padding: 0;
+                outline: none;
+                color: #333;
+                font-weight: 600;
+
+                &::placeholder {
+                  color: #aaa;
+                }
+              }
+
+              button {
+                height: 48px;
+                width: 48px;
+                line-height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
             }
 
-            &.checked {
-              color: #1976d2;
+            .auto-expand-wrapper {
+              position: relative;
+              margin-left: 32px;
+              width: calc(100% - 52px);
+              overflow: hidden;
+              
+              .hidden-div {
+                visibility: hidden;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                padding: 0 20px;
+                line-height: 32px;
+                font-size: 16px;
+                font-family: 'Courier New', Courier, monospace;
+              }
+
+              .description-input {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                border: none;
+                background: transparent;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                line-height: 32px;
+                min-height: 64px;
+                padding: 0 20px;
+                outline: none;
+                resize: none;
+                color: #333;
+                z-index: 2;
+                overflow: hidden;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+
+                &::placeholder {
+                  color: #999;
+                }
+              }
             }
           }
-
-          .title-field {
-            flex: 1;
-            margin-right: 8px;
-          }
-        }
-
-        .description-field {
-          width: 100%;
-          margin-left: 32px;
         }
       }
     }
