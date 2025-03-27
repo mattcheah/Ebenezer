@@ -128,13 +128,16 @@
         </div> -->
       <div class="notepad-container">
         <div class="notepad-lines">
-          <textarea
-            #contentTextarea
-            matInput
-            formControlName="content"
-            class="notepad-textarea"
-            placeholder="Write your content here (Markdown supported)">
-          </textarea>
+          <div class="auto-expand-wrapper">
+            <div class="hidden-div" [innerHTML]="entryForm.get('content')?.value + '\n'"></div>
+            <textarea
+              #contentTextarea
+              matInput
+              formControlName="content"
+              class="notepad-textarea"
+              placeholder="Write your content here (Markdown supported)">
+            </textarea>
+          </div>
         </div>
       </div>
       <div class="preview-panel" *ngIf="entryForm.get('content')?.value">
