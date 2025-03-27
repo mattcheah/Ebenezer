@@ -300,7 +300,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
       next: (savedEntry) => {
         this.entry = savedEntry;
         this.saving = false;
-        this.router.navigate(['/journal']);
+        // this.router.navigate(['/journal']);
       },
       error: (error: Error) => {
         console.error('Error saving entry:', error);
