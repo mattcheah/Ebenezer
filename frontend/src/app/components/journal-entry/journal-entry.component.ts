@@ -20,8 +20,11 @@ import { PrayerRequest } from '../../models/prayer-request';
 import { debounceTime, distinctUntilChanged, map, takeUntil, takeWhile } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MarkdownModule, MarkdownService } from 'ngx-markdown';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
+import { AssignPersonDialogComponent } from '../assign-person-dialog/assign-person-dialog.component';
+import { Person } from '../../models/person';
 
 @Component({
   selector: 'app-journal-entry',
@@ -40,8 +43,10 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
     MatAutocompleteModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatDialogModule,
     MarkdownModule,
-    SafeHtmlPipe
+    SafeHtmlPipe,
+    AssignPersonDialogComponent
   ],
   providers: [MarkdownService],
   templateUrl: './journal-entry.component.html',
@@ -59,6 +64,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   loading = false;
   saving = false;
   private destroy$ = new Subject<void>();
+  people: Person[] = [];
 
   initDate = new Date();
 
@@ -68,7 +74,8 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     private tagService: TagService,
     private prayerService: PrayerService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private dialog: MatDialog
   ) {
 
   }
@@ -139,7 +146,8 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
             this.fb.group({
               title: [request.title || '', Validators.required],
               description: [request.description || '', Validators.required],
-              checked: [request.checked || false]
+              checked: [request.checked || false],
+              assignedPerson: [request.assignedPerson || null]
             })
           )
         );
@@ -275,7 +283,8 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     const prayerRequestForm = this.fb.group({
       title: ['', Validators.required],
       description: ['', Validators.required],
-      checked: [false]
+      checked: [false],
+      assignedPerson: [null]
     });
     this.prayerRequestsFormArray.push(prayerRequestForm);
   }
@@ -330,6 +339,27 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
       error: (error: Error) => {
         console.error('Error saving entry:', error);
         this.saving = false;
+      }
+    });
+  }
+
+  openAssignPersonDialog(index: number): void {
+    const prayerRequest = this.prayerRequestsFormArray.at(index);
+    const currentPerson = prayerRequest.get('assignedPerson')?.value;
+
+    const dialogRef = this.dialog.open(AssignPersonDialogComponent, {
+      data: {
+        people: this.people,
+        currentPerson: currentPerson
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (!this.people.find(p => p.id === result.id)) {
+          this.people.push(result);
+        }
+        prayerRequest.patchValue({ assignedPerson: result });
       }
     });
   }

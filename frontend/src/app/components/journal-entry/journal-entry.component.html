@@ -89,6 +89,17 @@
                     {{ request.get('checked')?.value ? 'check_box' : 'check_box_outline_blank' }}
                   </mat-icon>
                   <input matInput formControlName="title" class="title-input" placeholder="Enter prayer request title">
+                  <span class="assigned-person" *ngIf="request.get('assignedPerson')?.value">
+                    | {{ request.get('assignedPerson')?.value.firstName }} {{ request.get('assignedPerson')?.value.lastName }}
+                  </span>
+                  <button mat-icon-button 
+                         [matTooltip]="request.get('assignedPerson')?.value ? 
+                           'Assigned to ' + request.get('assignedPerson')?.value.firstName + ' ' + request.get('assignedPerson')?.value.lastName : 
+                           'Assign to person'"
+                         class="assign-person-btn"
+                         (click)="openAssignPersonDialog(i)">
+                    <mat-icon [class.assigned]="request.get('assignedPerson')?.value">person</mat-icon>
+                  </button>
                   <button mat-icon-button color="warn" (click)="removePrayerRequestForm(i)">
                     <mat-icon>delete</mat-icon>
                   </button>
