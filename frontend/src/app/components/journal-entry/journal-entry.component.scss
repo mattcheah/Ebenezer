@@ -175,3 +175,71 @@
     display: none;
   }
 }
+
+.prayer-requests-section {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    h3 {
+      margin: 0;
+      color: #333;
+    }
+  }
+
+  .prayer-requests-list {
+    .prayer-request-item {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border-left: 4px solid #e0e0e0;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .prayer-request-content {
+        .checkbox-line {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .checkbox-icon {
+            margin-right: 8px;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            user-select: none;
+
+            &:hover {
+              color: #1976d2;
+            }
+
+            &.checked {
+              color: #1976d2;
+            }
+          }
+
+          .title-field {
+            flex: 1;
+            margin-right: 8px;
+          }
+        }
+
+        .description-field {
+          width: 100%;
+          margin-left: 32px;
+        }
+      }
+    }
+  }
+}

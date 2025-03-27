@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -93,7 +93,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
         date: [this.initDate, Validators.required],
         tags: [[]],
         bibleVerses: [[]],
-        prayerRequests: [[]],
+        prayerRequests: this.fb.array([]),
         content: ['', Validators.required]
       });
       this.loading = false;
@@ -134,12 +134,22 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     this.journalService.getEntry(id).subscribe({
       next: (entry) => {
         this.entry = entry;
+        const prayerRequestsArray = this.fb.array(
+          (entry.prayerRequests || []).map((request: any) => 
+            this.fb.group({
+              title: [request.title || '', Validators.required],
+              description: [request.description || '', Validators.required],
+              checked: [request.checked || false]
+            })
+          )
+        );
+
         this.entryForm = this.fb.group({
           title: entry.title,
           date: new Date(entry.createdAt ?? this.initDate),
           tags: entry.tags,
           bibleVerses: entry.bibleVerses,
-          prayerRequests: entry.prayerRequests,
+          prayerRequests: prayerRequestsArray,
           content: entry.content
         });
         this.loading = false;
@@ -257,20 +267,29 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     });
   }
 
-  addPrayerRequest(request: PrayerRequest): void {
-    const requests = this.entryForm.get('prayerRequests')?.value || [];
-    if (!requests.includes(request.id)) {
-      this.entryForm.patchValue({
-        prayerRequests: [...requests, request.id]
-      });
-    }
+  get prayerRequestsFormArray() {
+    return this.entryForm.get('prayerRequests') as FormArray;
   }
 
-  removePrayerRequest(requestId: number): void {
-    const requests = this.entryForm.get('prayerRequests')?.value || [];
-    this.entryForm.patchValue({
-      prayerRequests: requests.filter((id: number) => id !== requestId)
+  addPrayerRequestForm(): void {
+    const prayerRequestForm = this.fb.group({
+      title: ['', Validators.required],
+      description: ['', Validators.required],
+      checked: [false]
     });
+    this.prayerRequestsFormArray.push(prayerRequestForm);
+  }
+
+  togglePrayerRequestCheck(index: number): void {
+    const formGroup = this.prayerRequestsFormArray.at(index);
+    const currentValue = formGroup.get('checked')?.value;
+    formGroup.patchValue({ checked: !currentValue });
+  }
+
+  removePrayerRequestForm(index: number): void {
+    if (this.prayerRequestsFormArray.length > 0) {
+      this.prayerRequestsFormArray.removeAt(index);
+    }
   }
 
   getPrayerRequestById(id: number): PrayerRequest | undefined {
