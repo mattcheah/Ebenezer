@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,8 +20,11 @@ import { PrayerRequest } from '../../models/prayer-request';
 import { debounceTime, distinctUntilChanged, map, takeUntil, takeWhile } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MarkdownModule, MarkdownService } from 'ngx-markdown';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
+import { AssignPersonDialogComponent } from '../assign-person-dialog/assign-person-dialog.component';
+import { Person } from '../../models/person';
 
 @Component({
   selector: 'app-journal-entry',
@@ -40,8 +43,10 @@ import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
     MatAutocompleteModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatDialogModule,
     MarkdownModule,
-    SafeHtmlPipe
+    SafeHtmlPipe,
+    AssignPersonDialogComponent
   ],
   providers: [MarkdownService],
   templateUrl: './journal-entry.component.html',
@@ -59,6 +64,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   loading = false;
   saving = false;
   private destroy$ = new Subject<void>();
+  people: Person[] = [];
 
   initDate = new Date();
 
@@ -68,7 +74,8 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     private tagService: TagService,
     private prayerService: PrayerService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private dialog: MatDialog
   ) {
 
   }
@@ -93,7 +100,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
         date: [this.initDate, Validators.required],
         tags: [[]],
         bibleVerses: [[]],
-        prayerRequests: [[]],
+        prayerRequests: this.fb.array([]),
         content: ['', Validators.required]
       });
       this.loading = false;
@@ -134,12 +141,23 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     this.journalService.getEntry(id).subscribe({
       next: (entry) => {
         this.entry = entry;
+        const prayerRequestsArray = this.fb.array(
+          (entry.prayerRequests || []).map((request: any) => 
+            this.fb.group({
+              title: [request.title || '', Validators.required],
+              description: [request.description || '', Validators.required],
+              checked: [request.checked || false],
+              assignedPerson: [request.assignedPerson || null]
+            })
+          )
+        );
+
         this.entryForm = this.fb.group({
           title: entry.title,
           date: new Date(entry.createdAt ?? this.initDate),
           tags: entry.tags,
           bibleVerses: entry.bibleVerses,
-          prayerRequests: entry.prayerRequests,
+          prayerRequests: prayerRequestsArray,
           content: entry.content
         });
         this.loading = false;
@@ -257,20 +275,36 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
     });
   }
 
-  addPrayerRequest(request: PrayerRequest): void {
-    const requests = this.entryForm.get('prayerRequests')?.value || [];
-    if (!requests.includes(request.id)) {
-      this.entryForm.patchValue({
-        prayerRequests: [...requests, request.id]
-      });
-    }
+  get prayerRequestsFormArray() {
+    return this.entryForm.get('prayerRequests') as FormArray;
   }
 
-  removePrayerRequest(requestId: number): void {
-    const requests = this.entryForm.get('prayerRequests')?.value || [];
-    this.entryForm.patchValue({
-      prayerRequests: requests.filter((id: number) => id !== requestId)
+  addPrayerRequestForm(): void {
+    const prayerRequestForm = this.fb.group({
+      title: ['', Validators.required],
+      description: ['', Validators.required],
+      checked: [false],
+      assignedPerson: [null]
     });
+    this.prayerRequestsFormArray.push(prayerRequestForm);
+  }
+
+  adjustTextareaHeight(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+
+  togglePrayerRequestCheck(index: number): void {
+    const formGroup = this.prayerRequestsFormArray.at(index);
+    const currentValue = formGroup.get('checked')?.value;
+    formGroup.patchValue({ checked: !currentValue });
+  }
+
+  removePrayerRequestForm(index: number): void {
+    if (this.prayerRequestsFormArray.length > 0) {
+      this.prayerRequestsFormArray.removeAt(index);
+    }
   }
 
   getPrayerRequestById(id: number): PrayerRequest | undefined {
@@ -300,11 +334,32 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
       next: (savedEntry) => {
         this.entry = savedEntry;
         this.saving = false;
-        this.router.navigate(['/journal']);
+        // this.router.navigate(['/journal']);
       },
       error: (error: Error) => {
         console.error('Error saving entry:', error);
         this.saving = false;
+      }
+    });
+  }
+
+  openAssignPersonDialog(index: number): void {
+    const prayerRequest = this.prayerRequestsFormArray.at(index);
+    const currentPerson = prayerRequest.get('assignedPerson')?.value;
+
+    const dialogRef = this.dialog.open(AssignPersonDialogComponent, {
+      data: {
+        people: this.people,
+        currentPerson: currentPerson
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (!this.people.find(p => p.id === result.id)) {
+          this.people.push(result);
+        }
+        prayerRequest.patchValue({ assignedPerson: result });
       }
     });
   }

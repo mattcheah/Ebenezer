@@ -178,10 +178,10 @@
 </style>
 
 <mat-toolbar color="primary">
-  <span>Ebenezer</span>
+  <span id="ebenezer-title" routerLink="/">Ebenezer</span>
   <span class="spacer"></span>
   <nav>
-    <a mat-button routerLink="/" routerLinkActive="active">Journal</a>
+    <a mat-button routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Journal</a>
     <a mat-button routerLink="/prayer-requests" routerLinkActive="active">Prayer Requests</a>
     <a mat-button routerLink="/prayers-for-me" routerLinkActive="active">Prayers for Me</a>
   </nav>

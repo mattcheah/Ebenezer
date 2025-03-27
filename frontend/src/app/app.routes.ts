@@ -6,7 +6,7 @@ import { PrayersForMeComponent } from './components/prayers-for-me/prayers-for-m
 
 export const routes: Routes = [
   { path: '', component: JournalListComponent },
-  // { path: 'journal', component: JournalListComponent },
+  { path: 'journal', redirectTo: '', component: JournalListComponent },
   { path: 'journal/new', component: JournalEntryComponent },
   { path: 'journal/:id', component: JournalEntryComponent },
   { path: 'prayer-requests', component: PrayerRequestsComponent },
