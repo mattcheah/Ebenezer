@@ -1,15 +1,23 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import models
-from database import engine, get_db
+from database import SessionLocal, engine
 from pydantic import BaseModel, Field
 from datetime import datetime
 import json
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
+
+# Dependency to get database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 app = FastAPI()
 
@@ -84,11 +92,19 @@ class PrayerRequest(PrayerRequestBase):
         }
     }
 
+class PrayerRequestInJournalEntry(BaseModel):
+    title: str
+    description: Optional[str] = None
+    isForMe: bool = False
+    tags: List[int] = []
+    id: Optional[int] = None
+
 class JournalEntryBase(BaseModel):
     title: Optional[str] = None
     content: str
     bibleVerses: List[str] = []
     tags: List[int] = []
+    prayerRequests: List[PrayerRequestInJournalEntry] = []
 
 class JournalEntryCreate(JournalEntryBase):
     pass
@@ -98,25 +114,13 @@ class JournalEntry(JournalEntryBase):
     createdAt: datetime = Field(alias="created_at")
     updatedAt: Optional[datetime] = Field(alias="updated_at")
     tags: List[Tag] = []
-    prayer_requests: List["PrayerRequest"] = []
+    prayerRequests: List[PrayerRequest] = []
     model_config = {
         "from_attributes": True,
         "populate_by_name": True,
         "alias_generator": lambda x: x.split('_')[0] + ''.join(word.capitalize() for word in x.split('_')[1:]),
         "json_encoders": {
             datetime: lambda v: v.isoformat()
-        },
-        "json_schema_extra": {
-            "example": {
-                "id": 1,
-                "title": "My Journal Entry",
-                "content": "Content here",
-                "bibleVerses": ["John 3:16"],
-                "tags": [],
-                "createdAt": "2024-02-20T12:00:00",
-                "updatedAt": None,
-                "prayerRequests": []
-            }
         }
     }
 
@@ -142,8 +146,22 @@ def create_journal_entry(entry: JournalEntryCreate, db: Session = Depends(get_db
         content=entry.content,
         bible_verses=json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
     )
+    
+    # Handle tags
     if entry.tags:
         db_entry.tags = db.query(models.Tag).filter(models.Tag.id.in_(entry.tags)).all()
+    
+    # Create prayer requests
+    for pr in entry.prayerRequests:
+        db_prayer_request = models.PrayerRequest(
+            title=pr.title,
+            description=pr.description,
+            is_for_me=pr.isForMe
+        )
+        if pr.tags:
+            db_prayer_request.tags = db.query(models.Tag).filter(models.Tag.id.in_(pr.tags)).all()
+        db_entry.prayer_requests.append(db_prayer_request)
+    
     db.add(db_entry)
     db.commit()
     db.refresh(db_entry)
@@ -171,13 +189,47 @@ def update_journal_entry(entry_id: int, entry: JournalEntryCreate, db: Session =
     if db_entry is None:
         raise HTTPException(status_code=404, detail="Journal entry not found")
     
-    for key, value in entry.dict(exclude_unset=True).items():
-        if key == 'tags':
-            db_entry.tags = db.query(models.Tag).filter(models.Tag.id.in_(value)).all()
-        elif key == 'bibleVerses':
-            db_entry.bible_verses = json.dumps(value) if value else "[]"
+    # Update basic fields
+    db_entry.title = entry.title
+    db_entry.content = entry.content
+    db_entry.bible_verses = json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
+    
+    # Update tags
+    if entry.tags:
+        db_entry.tags = db.query(models.Tag).filter(models.Tag.id.in_(entry.tags)).all()
+    else:
+        db_entry.tags = []
+    
+    # Update prayer requests
+    existing_pr_ids = {pr.id for pr in db_entry.prayer_requests}
+    new_pr_ids = {pr.id for pr in entry.prayerRequests if pr.id is not None}
+    
+    # Delete prayer requests that are no longer present
+    for pr in db_entry.prayer_requests[:]:
+        if pr.id not in new_pr_ids:
+            db.delete(pr)
+    
+    # Update existing and create new prayer requests
+    for pr_data in entry.prayerRequests:
+        if pr_data.id is not None:
+            # Update existing prayer request
+            db_pr = db.query(models.PrayerRequest).filter(models.PrayerRequest.id == pr_data.id).first()
+            if db_pr:
+                db_pr.title = pr_data.title
+                db_pr.description = pr_data.description
+                db_pr.is_for_me = pr_data.isForMe
+                if pr_data.tags:
+                    db_pr.tags = db.query(models.Tag).filter(models.Tag.id.in_(pr_data.tags)).all()
         else:
-            setattr(db_entry, key, value)
+            # Create new prayer request
+            db_pr = models.PrayerRequest(
+                title=pr_data.title,
+                description=pr_data.description,
+                is_for_me=pr_data.isForMe
+            )
+            if pr_data.tags:
+                db_pr.tags = db.query(models.Tag).filter(models.Tag.id.in_(pr_data.tags)).all()
+            db_entry.prayer_requests.append(db_pr)
     
     db.commit()
     db.refresh(db_entry)
