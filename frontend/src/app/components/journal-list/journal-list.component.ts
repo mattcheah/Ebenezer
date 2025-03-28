@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatListModule } from '@angular/material/list';
 import { JournalService } from '../../services/journal.service';
 import { JournalEntry } from '../../models/journal-entry';
 import { format } from 'date-fns';
@@ -22,7 +23,8 @@ import { format } from 'date-fns';
     MatIconModule,
     MatChipsModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatListModule
   ],
   templateUrl: './journal-list.component.html',
   styleUrl: './journal-list.component.scss'
@@ -51,6 +53,6 @@ export class JournalListComponent implements OnInit {
   }
 
   getContentPreview(content: string): string {
-    return content.length > 150 ? content.substring(0, 150) + '...' : content;
+    return content.length > 100 ? content.substring(0, 100) + '...' : content;
   }
 }

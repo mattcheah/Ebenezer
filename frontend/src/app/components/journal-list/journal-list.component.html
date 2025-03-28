@@ -7,45 +7,41 @@
     </button>
   </div>
 
-  <div class="entries-grid">
-    <mat-card *ngFor="let entry of entries" class="entry-card">
-      <mat-card-header>
-        <mat-card-title>{{ entry.title }}</mat-card-title>
-        <mat-card-subtitle>{{ entry.createdAt | date:'MMM d, yyyy' }}</mat-card-subtitle>
-      </mat-card-header>
-      
-      <mat-card-content>
-        <div class="tags">
-          <mat-chip *ngFor="let tag of entry.tags" [style.background-color]="tag.color">
-            {{ tag.name }}
-          </mat-chip>
+  <mat-list class="entries-list">
+    <mat-list-item *ngFor="let entry of entries" class="entry-item" [routerLink]="['/journal', entry.id]">
+      <div class="entry-content">
+        <div class="entry-main">
+          <h3 class="entry-title">{{ entry.title }}</h3>
+          <p class="content-preview">{{ getContentPreview(entry.content) }}</p>
+          
+          <div class="entry-footer">
+            <div class="metadata">
+              <span class="entry-date">{{ entry.createdAt | date:'MMM d, yyyy' }}</span>
+              <span class="separator" *ngIf="entry.tags.length > 0">•</span>
+              <div class="tags" *ngIf="entry.tags.length > 0">
+                <mat-chip *ngFor="let tag of entry.tags" [style.background-color]="tag.color">
+                  {{ tag.name }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="indicators">
+              <div class="bible-verses" *ngIf="entry.bibleVerses.length > 0">
+                <mat-icon matTooltip="Bible Verses">menu_book</mat-icon>
+                <span>{{ entry.bibleVerses.length }}</span>
+              </div>
+              
+              <div class="prayer-requests" *ngIf="entry.prayerRequests.length > 0">
+                <mat-icon matTooltip="Prayer Requests">praying_hands</mat-icon>
+                <span>{{ entry.prayerRequests.length }}</span>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <p class="content-preview">{{ getContentPreview(entry.content) }}</p>
-        
-        <div class="bible-verses" *ngIf="entry.bibleVerses.length > 0">
-          <mat-icon matTooltip="Bible Verses">menu_book</mat-icon>
-          <span>{{ entry.bibleVerses.length }} verse{{ entry.bibleVerses.length !== 1 ? 's' : '' }}</span>
-        </div>
-        
-        <div class="prayer-requests" *ngIf="entry.prayerRequests.length > 0">
-          <mat-icon matTooltip="Prayer Requests">praying_hands</mat-icon>
-          <span>{{ entry.prayerRequests.length }} request{{ entry.prayerRequests.length !== 1 ? 's' : '' }}</span>
-        </div>
-      </mat-card-content>
-      
-      <mat-card-actions>
-        <button mat-button color="primary" [routerLink]="['/journal', entry.id]">
-          <mat-icon>edit</mat-icon>
-          Edit
-        </button>
-        <button mat-button color="primary" [routerLink]="['/journal', entry.id]">
-          <mat-icon>visibility</mat-icon>
-          View
-        </button>
-      </mat-card-actions>
-    </mat-card>
-  </div>
+      </div>
+      <mat-divider></mat-divider>
+    </mat-list-item>
+  </mat-list>
 
   <div class="no-entries" *ngIf="!loading && entries.length === 0">
     <mat-icon>book</mat-icon>

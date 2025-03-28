@@ -1,73 +1,121 @@
 .journal-list {
   padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 
     h1 {
       margin: 0;
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 500;
     }
   }
 
-  .entries-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-  }
+  .entries-list {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    
+    .entry-item {
+      cursor: pointer;
+      transition: background-color 0.2s;
+      height: auto !important;
+      
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+      }
+      
+      .entry-content {
+        width: 100%;
+        padding: 12px 16px;
+        
+        .entry-main {
+          .entry-title {
+            margin: 0 0 4px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: rgba(0, 0, 0, 0.87);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
 
-  .entry-card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+          .content-preview {
+            margin: 0 0 8px;
+            color: rgba(0, 0, 0, 0.6);
+            line-height: 1.4;
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
 
-    mat-card-header {
-      margin-bottom: 16px;
-    }
+          .entry-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            .metadata {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              color: rgba(0, 0, 0, 0.6);
+              font-size: 0.8rem;
 
-    mat-card-content {
-      flex-grow: 1;
+              .entry-date {
+                white-space: nowrap;
+              }
 
-      .tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 16px;
+              .separator {
+                color: rgba(0, 0, 0, 0.3);
+              }
 
-        mat-chip {
-          color: white;
+              .tags {
+                display: flex;
+                gap: 4px;
+                max-width: 300px;
+                overflow: hidden;
+
+                mat-chip {
+                  color: white;
+                  font-size: 0.75rem;
+                  height: 20px;
+                  padding: 0 6px;
+                  min-height: 20px;
+                }
+              }
+            }
+
+            .indicators {
+              display: flex;
+              gap: 12px;
+
+              .bible-verses,
+              .prayer-requests {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                color: rgba(0, 0, 0, 0.5);
+                font-size: 0.8rem;
+
+                mat-icon {
+                  font-size: 16px;
+                  width: 16px;
+                  height: 16px;
+                }
+              }
+            }
+          }
         }
       }
-
-      .content-preview {
-        margin: 0 0 16px;
-        color: rgba(0, 0, 0, 0.7);
-        line-height: 1.5;
-      }
-
-      .bible-verses,
-      .prayer-requests {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: rgba(0, 0, 0, 0.6);
-        margin-bottom: 8px;
-
-        mat-icon {
-          font-size: 20px;
-        }
-      }
-    }
-
-    mat-card-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 16px;
     }
   }
 
@@ -76,26 +124,29 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px;
+    padding: 32px;
     text-align: center;
     color: rgba(0, 0, 0, 0.6);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      margin-bottom: 16px;
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      margin-bottom: 12px;
     }
 
     p {
       margin: 0;
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
 
   .loading {
     display: flex;
     justify-content: center;
-    padding: 48px;
+    padding: 32px;
   }
 }
