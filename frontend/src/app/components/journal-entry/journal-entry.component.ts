@@ -108,7 +108,7 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
 
     
     // this.loadTags();
-    this.loadPrayerRequests();
+    // this.loadPrayerRequests();
     this.setupAutoSave();
   }
 
@@ -142,12 +142,16 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
       next: (entry) => {
         this.entry = entry;
         const prayerRequestsArray = this.fb.array(
-          (entry.prayerRequests || []).map((request: any) => 
+          (entry.prayerRequests || []).map((request: PrayerRequest) => 
             this.fb.group({
               title: [request.title || '', Validators.required],
-              description: [request.description || '', Validators.required],
+              description: [request.description || ''],
               checked: [request.checked || false],
-              assignedPerson: [request.assignedPerson || null]
+              assignedPerson: [request.assignedPerson || null],
+              isForMe: [request.isForMe || false],
+              tags: [request.tags || []],
+              updates: [request.updates || []],
+              id: [request.id]
             })
           )
         );
@@ -160,6 +164,14 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
           prayerRequests: prayerRequestsArray,
           content: entry.content
         });
+
+        // Add any new people from prayer requests to the people list
+        entry.prayerRequests?.forEach(request => {
+          if (request.assignedPerson && !this.people.find(p => p.id === request.assignedPerson?.id)) {
+            this.people.push(request.assignedPerson);
+          }
+        });
+
         this.loading = false;
       },
       error: (error: Error) => {
@@ -180,16 +192,16 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   //   });
   // }
 
-  private loadPrayerRequests(): void {
-    this.prayerService.getRequests().subscribe({
-      next: (requests: PrayerRequest[]) => {
-        this.prayerRequests = requests;
-      },
-      error: (error: Error) => {
-        console.error('Error loading prayer requests:', error);
-      }
-    });
-  }
+  // private loadPrayerRequests(): void {
+  //   this.prayerService.getRequests().subscribe({
+  //     next: (requests: PrayerRequest[]) => {
+  //       this.prayerRequests = requests;
+  //     },
+  //     error: (error: Error) => {
+  //       console.error('Error loading prayer requests:', error);
+  //     }
+  //   });
+  // }
 
   private setupAutoSave(): void {
     this.entryForm.valueChanges
@@ -282,9 +294,13 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
   addPrayerRequestForm(): void {
     const prayerRequestForm = this.fb.group({
       title: ['', Validators.required],
-      description: ['', Validators.required],
+      description: [''],
       checked: [false],
-      assignedPerson: [null]
+      assignedPerson: [null],
+      isForMe: [false],
+      tags: [[]],
+      updates: [[]],
+      id: [null]
     });
     this.prayerRequestsFormArray.push(prayerRequestForm);
   }
@@ -316,17 +332,31 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     const formValue = this.entryForm.value;
+    console.log('Form value:', formValue); // Debug log
+
     const entryData: JournalEntry = {
-      id: this.entry?.id || 0,
+      id: this.entry?.id,
       title: formValue.title,
-      updatedAt: formValue.date.toISOString(),
       content: formValue.content,
-      tags: formValue.tags ?? [],
-      bibleVerses: formValue.bibleVerses ?? [],
-      prayerRequests: formValue.prayerRequests ?? []
+      tags: formValue.tags || [],
+      bibleVerses: formValue.bibleVerses || [],
+      prayerRequests: (formValue.prayerRequests || []).map((request: any) => ({
+        id: request.id || undefined,
+        title: request.title,
+        description: request.description || '',
+        checked: request.checked || false,
+        assignedPerson: request.assignedPerson || null,
+        isForMe: request.isForMe || false,
+        tags: request.tags || [],
+        updates: request.updates || []
+      })),
+      createdAt: this.entry?.createdAt,
+      updatedAt: new Date().toISOString()
     };
 
-    const operation = this.entry && typeof this.entry.id === 'number'
+    console.log('Entry data being sent:', entryData); // Debug log
+
+    const operation = this.entry?.id
       ? this.journalService.updateEntry(this.entry.id, entryData)
       : this.journalService.createEntry(entryData);
 
@@ -334,9 +364,9 @@ export class JournalEntryComponent implements OnInit, OnDestroy {
       next: (savedEntry) => {
         this.entry = savedEntry;
         this.saving = false;
-        // this.router.navigate(['/journal']);
+        this.entryForm.markAsPristine();
       },
-      error: (error: Error) => {
+      error: (error) => {
         console.error('Error saving entry:', error);
         this.saving = false;
       }

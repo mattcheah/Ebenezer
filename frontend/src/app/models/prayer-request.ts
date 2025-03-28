@@ -1,4 +1,5 @@
 import { Tag } from './tag';
+import { Person } from './person';
 
 export interface PrayerRequestUpdate {
   id?: number;
@@ -12,6 +13,8 @@ export interface PrayerRequest {
   title: string;
   description: string;
   isForMe: boolean;
+  checked: boolean;
+  assignedPerson: Person | null;
   tags: Tag[];
   updates: PrayerRequestUpdate[];
   createdAt?: string;

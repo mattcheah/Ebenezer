@@ -1,4 +1,6 @@
 import { Tag } from './tag';
+import { Person } from './person';
+import { PrayerRequest } from './prayer-request';
 
 export interface JournalEntry {
   id?: number;
@@ -7,7 +9,7 @@ export interface JournalEntry {
   // date: string;
   tags: Tag[];
   bibleVerses: string[];
-  prayerRequests: number[];
+  prayerRequests: PrayerRequest[];
   createdAt?: string;
   updatedAt?: string;
 }
