@@ -7,7 +7,7 @@ A modern CRUD application built with FastAPI (backend) and React (frontend).
 ```
 .
 ├── backend/         # FastAPI backend
-└── frontend/        # React frontend
+└── frontend/        # Angular frontend
 ```
 
 ## Setup Instructions

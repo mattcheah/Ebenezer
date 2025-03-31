@@ -7,6 +7,11 @@ from database import SessionLocal, engine
 from pydantic import BaseModel, Field
 from datetime import datetime
 import json
+import logging
+import uvicorn
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -30,11 +35,6 @@ app.add_middleware(
     expose_headers=["*"],  # Exposes all headers
     max_age=3600,  # Cache preflight requests for 1 hour
 )
-
-# Add a test endpoint to verify CORS
-@app.get("/test-cors")
-def test_cors():
-    return {"message": "CORS is working"}
 
 # Pydantic models for request/response
 class TagBase(BaseModel):
@@ -69,7 +69,7 @@ class PrayerRequestUpdate(PrayerRequestUpdateBase):
 class PrayerRequestBase(BaseModel):
     title: str
     description: str
-    isForMe: bool = False
+    assignedTo: Optional["Person"] = None
     tags: List[int] = []
 
 class PrayerRequestCreate(PrayerRequestBase):
@@ -81,8 +81,6 @@ class PrayerRequest(PrayerRequestBase):
     updated_at: Optional[datetime]
     updates: List[PrayerRequestUpdate] = []
     tags: List[Tag] = []
-    journal_entry_id: Optional[int] = None
-    journal_entry: Optional["JournalEntry"] = None
     model_config = {
         "from_attributes": True,
         "populate_by_name": True,
@@ -95,7 +93,8 @@ class PrayerRequest(PrayerRequestBase):
 class PrayerRequestInJournalEntry(BaseModel):
     title: str
     description: Optional[str] = None
-    isForMe: bool = False
+    checked: bool = False
+    assignedToId: Optional[int] = None
     tags: List[int] = []
     id: Optional[int] = None
 
@@ -114,14 +113,14 @@ class JournalEntry(JournalEntryBase):
     createdAt: datetime = Field(alias="created_at")
     updatedAt: Optional[datetime] = Field(alias="updated_at")
     tags: List[Tag] = []
-    prayerRequests: List[PrayerRequest] = []
+    prayerRequests: List[PrayerRequestInJournalEntry] = Field(alias="prayer_requests")
     model_config = {
         "from_attributes": True,
         "populate_by_name": True,
-        "alias_generator": lambda x: x.split('_')[0] + ''.join(word.capitalize() for word in x.split('_')[1:]),
         "json_encoders": {
             datetime: lambda v: v.isoformat()
-        }
+        },
+        "alias_generator": lambda x: x.split('_')[0] + ''.join(word.capitalize() for word in x.split('_')[1:])
     }
 
 # CRUD operations for Tags
@@ -141,46 +140,79 @@ def read_tags(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 # CRUD operations for Journal Entries
 @app.post("/journal-entries/", response_model=JournalEntry)
 def create_journal_entry(entry: JournalEntryCreate, db: Session = Depends(get_db)):
+    logger.debug(f"Creating journal entry with title: {entry.title}")
     db_entry = models.JournalEntry(
         title=entry.title,
         content=entry.content,
-        bible_verses=json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
+        bibleVerses=json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
     )
     
-    # Handle tags
     if entry.tags:
+        logger.debug(f"Processing tags: {entry.tags}")
         db_entry.tags = db.query(models.Tag).filter(models.Tag.id.in_(entry.tags)).all()
     
-    # Create prayer requests
+    logger.debug(f"Processing {len(entry.prayerRequests)} prayer requests")
     for pr in entry.prayerRequests:
+        logger.debug(f"Creating prayer request: {pr.title}")
         db_prayer_request = models.PrayerRequest(
             title=pr.title,
             description=pr.description,
-            is_for_me=pr.isForMe
+            checked=pr.checked,
+            journalEntryId=db_entry.id,
+            assignedToId=pr.assignedToId
         )
         if pr.tags:
+            logger.debug(f"Processing tags for prayer request: {pr.tags}")
             db_prayer_request.tags = db.query(models.Tag).filter(models.Tag.id.in_(pr.tags)).all()
-        db_entry.prayer_requests.append(db_prayer_request)
+        db_entry.prayerRequests.append(db_prayer_request)
     
+    logger.debug("Committing journal entry to database")
     db.add(db_entry)
     db.commit()
     db.refresh(db_entry)
+    logger.debug(f"Journal entry created successfully with ID: {db_entry.id}")
     return db_entry
 
 @app.get("/journal-entries/", response_model=List[JournalEntry])
 def read_journal_entries(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    logger.debug("Reading all journal entries")
     entries = db.query(models.JournalEntry).options(
-        joinedload(models.JournalEntry.prayer_requests)
+        joinedload(models.JournalEntry.prayer_requests).joinedload(models.PrayerRequest.tags)
     ).offset(skip).limit(limit).all()
+    
+    # Log the response data structure
+    response_data = [
+        {
+            "id": entry.id,
+            "title": entry.title,
+            "prayerRequests": [
+                {
+                    "id": pr.id,
+                    "title": pr.title,
+                    "description": pr.description,
+                    "tags": [tag.id for tag in pr.tags],
+                    "assignedToId": pr.assignedToId
+                }
+                for pr in entry.prayer_requests
+            ]
+        }
+        for entry in entries
+    ]
+    logger.debug(f"Response data structure: {json.dumps(response_data, indent=2)}")
+    
     return entries
 
 @app.get("/journal-entries/{entry_id}", response_model=JournalEntry)
 def read_journal_entry(entry_id: int, db: Session = Depends(get_db)):
+    logger.debug(f"Reading journal entry with ID: {entry_id}")
     entry = db.query(models.JournalEntry).options(
-        joinedload(models.JournalEntry.prayer_requests)
+        joinedload(models.JournalEntry.prayer_requests).joinedload(models.PrayerRequest.tags)
     ).filter(models.JournalEntry.id == entry_id).first()
+    
     if entry is None:
+        logger.warning(f"Journal entry with ID {entry_id} not found")
         raise HTTPException(status_code=404, detail="Journal entry not found")
+    
     return entry
 
 @app.put("/journal-entries/{entry_id}", response_model=JournalEntry)
@@ -192,7 +224,7 @@ def update_journal_entry(entry_id: int, entry: JournalEntryCreate, db: Session =
     # Update basic fields
     db_entry.title = entry.title
     db_entry.content = entry.content
-    db_entry.bible_verses = json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
+    db_entry.bibleVerses = json.dumps(entry.bibleVerses) if entry.bibleVerses else "[]"
     
     # Update tags
     if entry.tags:
@@ -201,11 +233,11 @@ def update_journal_entry(entry_id: int, entry: JournalEntryCreate, db: Session =
         db_entry.tags = []
     
     # Update prayer requests
-    existing_pr_ids = {pr.id for pr in db_entry.prayer_requests}
+    existing_pr_ids = {pr.id for pr in db_entry.prayerRequests}
     new_pr_ids = {pr.id for pr in entry.prayerRequests if pr.id is not None}
     
     # Delete prayer requests that are no longer present
-    for pr in db_entry.prayer_requests[:]:
+    for pr in db_entry.prayerRequests[:]:
         if pr.id not in new_pr_ids:
             db.delete(pr)
     
@@ -217,7 +249,9 @@ def update_journal_entry(entry_id: int, entry: JournalEntryCreate, db: Session =
             if db_pr:
                 db_pr.title = pr_data.title
                 db_pr.description = pr_data.description
-                db_pr.is_for_me = pr_data.isForMe
+                db_pr.assignedToId = pr_data.assignedToId
+                db_pr.checked = pr_data.checked
+                db_pr.journalEntryId = entry_id
                 if pr_data.tags:
                     db_pr.tags = db.query(models.Tag).filter(models.Tag.id.in_(pr_data.tags)).all()
         else:
@@ -225,11 +259,13 @@ def update_journal_entry(entry_id: int, entry: JournalEntryCreate, db: Session =
             db_pr = models.PrayerRequest(
                 title=pr_data.title,
                 description=pr_data.description,
-                is_for_me=pr_data.isForMe
+                assignedToId=pr_data.assignedToid,
+                checked=pr_data.checked,
+                journalEntryId=entry_id
             )
             if pr_data.tags:
                 db_pr.tags = db.query(models.Tag).filter(models.Tag.id.in_(pr_data.tags)).all()
-            db_entry.prayer_requests.append(db_pr)
+            db_entry.prayerRequests.append(db_pr)
     
     db.commit()
     db.refresh(db_entry)
@@ -251,7 +287,7 @@ def create_prayer_request(request: PrayerRequestCreate, db: Session = Depends(ge
     db_request = models.PrayerRequest(
         title=request.title,
         description=request.description,
-        is_for_me=request.isForMe
+        assignedToId=request.assignedToId
     )
     if request.tags:
         db_request.tags = db.query(models.Tag).filter(models.Tag.id.in_(request.tags)).all()
@@ -360,3 +396,6 @@ def delete_prayer_request_update(request_id: int, update_id: int, db: Session = 
     db.delete(db_update)
     db.commit()
     return {"message": "Prayer request update deleted successfully"} 
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

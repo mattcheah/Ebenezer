@@ -4,67 +4,80 @@ from sqlalchemy.sql import func
 from database import Base
 import json
 
+# models.py defines the SQLAlchemy ORM (Object-Relational Mapping) models 
+# that represent your database tables. 
+# These models are used to interact with the database directly.
+
 # Association table for many-to-many relationship between JournalEntry and Tag
-journal_tag = Table(
-    'journal_tag',
+journalTag = Table(
+    'JournalTag',
     Base.metadata,
-    Column('journal_id', Integer, ForeignKey('journal_entries.id')),
-    Column('tag_id', Integer, ForeignKey('tags.id'))
+    Column('journalId', Integer, ForeignKey('JournalEntries.id')),
+    Column('tagId', Integer, ForeignKey('tags.id'))
 )
 
 # Association table for many-to-many relationship between PrayerRequest and Tag
-prayer_request_tag = Table(
-    'prayer_request_tag',
+prayerRequestTag = Table(
+    'PrayerRequestTag',
     Base.metadata,
-    Column('prayer_request_id', Integer, ForeignKey('prayer_requests.id')),
-    Column('tag_id', Integer, ForeignKey('tags.id'))
+    Column('prayerRequestId', Integer, ForeignKey('PrayerRequests.id')),
+    Column('tagId', Integer, ForeignKey('tags.id'))
+)
+
+# Association table for many-to-many relationship between PrayerRequest and JournalEntry
+journal_prayer_request = Table(
+    'journal_prayer_request',
+    Base.metadata,
+    Column('prayerRequestId', Integer, ForeignKey('PrayerRequests.id')),
+    Column('journalId', Integer, ForeignKey('JournalEntries.id'))
 )
 
 class JournalEntry(Base):
-    __tablename__ = "journal_entries"
+    __tablename__ = "JournalEntries"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(Text)
-    bible_verses = Column(Text, default="[]")  # Store as JSON string, default to empty array
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    bibleVerses = Column(Text, default="[]")  # Store as JSON string, default to empty array
+    createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    updatedAt = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    tags = relationship("Tag", secondary=journal_tag, back_populates="journal_entries")
-    prayer_requests = relationship("PrayerRequest", back_populates="journal_entry")
+    tags = relationship("Tag", secondary=journalTag, back_populates="journalEntries")
+    prayerRequests = relationship("PrayerRequest", secondary=journal_prayer_request, back_populates="journalEntries")
 
     @property
-    def bible_verses_list(self):
+    def bibleVersesList(self):
         try:
-            return json.loads(self.bible_verses)
+            return json.loads(self.bibleVerses)
         except (json.JSONDecodeError, TypeError):
             return []
 
-    @bible_verses_list.setter
-    def bible_verses_list(self, value):
-        self.bible_verses = json.dumps(value) if value else "[]"
+    @bibleVersesList.setter
+    def bibleVersesList(self, value):
+        self.bibleVerses = json.dumps(value) if value else "[]"
 
 class PrayerRequest(Base):
-    __tablename__ = "prayer_requests"
+    __tablename__ = "PrayerRequests"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(Text)
-    is_for_me = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    checked = Column(Boolean, default=False)
+    createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    updatedAt = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Foreign Keys
-    journal_entry_id = Column(Integer, ForeignKey("journal_entries.id"), nullable=True)
-    
+    # Foreign key to the Person table
+    assignedToId = Column(Integer, ForeignKey("Person.id"), nullable=True)  # Nullable for optional assignment
+
     # Relationships
-    journal_entry = relationship("JournalEntry", back_populates="prayer_requests")
-    tags = relationship("Tag", secondary=prayer_request_tag, back_populates="prayer_requests")
-    updates = relationship("PrayerRequestUpdate", back_populates="prayer_request")
+    journalEntries = relationship("JournalEntry", secondary=journal_prayer_request, back_populates="prayerRequests")
+    tags = relationship("Tag", secondary=prayerRequestTag, back_populates="prayerRequests")
+    updates = relationship("PrayerRequestUpdate", back_populates="prayerRequest")
+    assignedTo = relationship("Person", back_populates="prayerRequests")  # Relationship to Person
 
 class PrayerRequestUpdate(Base):
-    __tablename__ = "prayer_request_updates"
+    __tablename__ = "PrayerRequestUpdates"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
@@ -72,10 +85,20 @@ class PrayerRequestUpdate(Base):
     date = Column(DateTime(timezone=True), server_default=func.now())
     
     # Foreign Keys
-    prayer_request_id = Column(Integer, ForeignKey("prayer_requests.id"))
+    prayerRequestId = Column(Integer, ForeignKey("PrayerRequests.id"))
     
     # Relationships
-    prayer_request = relationship("PrayerRequest", back_populates="updates")
+    prayerRequest = relationship("PrayerRequest", back_populates="updates")
+
+class Person(Base):
+    __tablename__ = "Person"
+
+    id = Column(Integer, primary_key=True, index=True)
+    firstName = Column(String, nullable=False)
+    lastName = Column(String, nullable=False)
+
+    # Relationships
+    prayerRequests = relationship("PrayerRequest", back_populates="assignedTo")
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -84,5 +107,5 @@ class Tag(Base):
     name = Column(String, unique=True, index=True)
     
     # Relationships
-    journal_entries = relationship("JournalEntry", secondary=journal_tag, back_populates="tags")
-    prayer_requests = relationship("PrayerRequest", secondary=prayer_request_tag, back_populates="tags") 
+    journalEntries = relationship("JournalEntry", secondary=journalTag, back_populates="tags")
+    prayerRequests = relationship("PrayerRequest", secondary=prayerRequestTag, back_populates="tags") 
